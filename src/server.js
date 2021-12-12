@@ -1,4 +1,5 @@
 import express from "express";
+import cors from 'cors'
 
 // GET '/' 				-> get users list.
 // POST '/signin'		-> check for users and send status (success/fail)
@@ -111,16 +112,17 @@ const users = [
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
 	res.json(users);
 })
 
 app.post('/signin', (req, res) => {
-	let {username, password} = req.body;
+	let {email, password} = req.body;
 	for (let user of users) {
-		if (user.usersname === username && user.password === password) {
-			return res.send('success');
+		if (user.email === email && user.password === password) {
+			return res.json('success');
 		}
 	}
 
