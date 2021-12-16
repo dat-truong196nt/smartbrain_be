@@ -1,7 +1,10 @@
 
 const registerHandler = (database, hashing) => async (req, res) => {
+	let {password, name, email} = req.body;
+	if (!password || !name || !email)
+		return res.status(400).json('Wrong input format');
+
 	try {
-		let {password, name, email} = req.body;
 		await database.transaction(async trx => {
 			const loginId = await trx('login', 'id')
 				.insert({
