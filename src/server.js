@@ -85,7 +85,6 @@ app.put('/image', (req, res) => {
 	database('users')
 	.increment('entries', 1)
 	.where({id})
-	.returning('*')
 	.then(ret => {return ret ? res.json('success') : res.status(400).json('failed')})
 	.catch(err => res.status(400).json('error on submitting image'));
 })
