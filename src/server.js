@@ -1,5 +1,7 @@
 import express from "express";
 import cors from 'cors'
+import knex from 'knex'
+import hashing from 'bcrypt-nodejs'
 
 // GET '/' 				-> get users list.
 // POST '/signin'		-> check for users and send status (success/fail)
@@ -7,169 +9,85 @@ import cors from 'cors'
 // GET '/profile/:id'	-> get user profile
 // PUT '/image'			-> push user image
 
-const users = [
-	{
-		id: 1,
-		name: "Leanne Graham",
-		usersname: "Bret",
-		email: "Sincere@april.biz",
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 2,
-		name: "Ervin Howell",
-		usersname: "Antonette",
-		email: "Shanna@melissa.tv",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 3,
-		name: "Clementine Bauch",
-		usersname: "Samantha",
-		email: "Nathan@yesenia.net",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 4,
-		name: "Patricia Lebsack",
-		usersname: "Karianne",
-		email: "Julianne.OConner@kory.org",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 5,
-		name: "Chelsey Dietrich",
-		usersname: "Kamren",
-		email: "Lucio_Hettinger@annie.ca",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 6,
-		name: "Mrs. Dennis Schulist",
-		usersname: "Leopoldo_Corkery",
-		email: "Karley_Dach@jasper.info",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 7,
-		name: "Kurtis Weissnat",
-		usersname: "Elwyn.Skiles",
-		email: "Telly.Hoeger@billy.biz",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 8,
-		name: "Nicholas Runolfsdottir V",
-		usersname: "Maxime_Nienow",
-		email: "Sherwood@rosamond.me",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 9,
-		name: "Glenna Reichert",
-		usersname: "Delphine",
-		email: "Chaim_McDermott@dana.io",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-	{
-		id: 10,
-		name: "Clementina DuBuque",
-		usersname: "Moriah.Stanton",
-		email: "Rey.Padberg@karina.biz",
-
-		date: new Date(),
-		entries: 0,
-		password: '123',
-	},
-];
+const database = knex({
+	client: 'mysql',
+	connection: {
+		host : '127.0.0.1',
+		port : 3306,
+		user : 'dat.truong',
+		password : 'admin',
+		database : 'smart_brain'
+	}
+})
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-app.get('/', (req, res) => {
-	res.json(users);
-})
-
-app.post('/signin', (req, res) => {
+app.post('/signin', async (req, res) => {
 	let {email, password} = req.body;
-	for (let user of users) {
-		if (user.email === email && user.password === password) {
-			return res.json('success');
-		}
-	}
 
-	return res.status(400).json('failed');
+	try {
+		const hash = await database('login').select('hash').where({email})
+		if (!hash.length)
+			return res.status(400).json('username or password not found');
+		const matched = hashing.compareSync(password, hash[0].hash)
+		if (matched) {
+			const user = await database('users').select('*').where({email})
+			res.json(user[0]);
+		} else {
+			res.status(400).json('username or password not found');
+		}
+	} catch(err) {
+		res.status(400).json('wrong credential');
+	}
 })
 
-app.post('/register', (req, res) => {
-	let {username, password, name, email} = req.body;
-	users.push({
-		id: users.length + 1,
-		name: name,
-		usersname: username,
-		email: email,
-		date: new Date(),
-		entries: 0,
-		password: password,
-	})
-	res.send(users[users.length - 1]);
+app.post('/register', async (req, res) => {
+	try {
+		let {password, name, email} = req.body;
+		await database.transaction(async trx => {
+			const loginId = await trx('login', 'id')
+				.insert({
+					email: email,
+					hash: hashing.hashSync(password),
+				});
+			const userId = await trx('users', 'id')
+				.insert({
+					name: name,
+					email: email,
+					joined: new Date(),
+				});
+			res.json({loginId, userId});
+		})
+	} catch (err) {
+		res.status(400).json('Unable to register');
+	}
 })
 
 app.get('/profile/:id', (req, res) => {
 	const {id} = req.params;
-	let found = false;
 
-	users.forEach((usr) => {
-		if (usr.id == id) {
-			found = true;
-			res.json(usr);
-		}
+	database('users')
+	.select('*')
+	.where({id})
+	.then(user => {
+		if (user.length) res.json(user[0]);
+		else res.status(400).json(`user with (id:${id}) not found`);
 	})
-
-	if (!found) res.status(400).json(`user with (id:${id}) not found`);
+	.catch(err => res.status(400).json('Error to get user'));
 })
 
 app.put('/image', (req, res) => {
 	const {id} = req.body;
-	let found = false;
 
-	users.forEach((usr) => {
-		if (usr.id == id) {
-			found = true;
-			usr.entries++;
-			res.json(usr);
-		}
-	})
-
-	if (!found) res.status(400).json(`user with (id:${id}) not found`);
+	database('users')
+	.increment('entries', 1)
+	.where({id})
+	.returning('*')
+	.then(ret => {return ret ? res.json('success') : res.status(400).json('failed')})
+	.catch(err => res.status(400).json('error on submitting image'));
 })
 
 app.listen(3000, () => console.log('Server is now running ...'));
