@@ -5,7 +5,7 @@ import hashing from 'bcrypt-nodejs'
 import signinHandler from "./Controller/signin.js"
 import registerHandler from "./Controller/register.js"
 import profileHandler from "./Controller/profile.js";
-import imageHandler from "./Controller/image.js";
+import imageHandler, {apiCalling} from "./Controller/image.js";
 
 // GET '/' 				-> get users list.
 // POST '/signin'		-> check for users and send status (success/fail)
@@ -33,5 +33,6 @@ app.post('/signin', signinHandler(database, hashing));
 app.post('/register', registerHandler(database, hashing));
 app.get('/profile/:id', profileHandler(database))
 app.put('/image', imageHandler(database))
+app.put('/imageUrl', apiCalling(database))
 
 app.listen(3000, () => console.log('Server is now running ...'));
