@@ -33,6 +33,6 @@ app.post('/signin', signinHandler(database, hashing));
 app.post('/register', registerHandler(database, hashing));
 app.get('/profile/:id', profileHandler(database))
 app.put('/image', imageHandler(database))
-app.put('/imageUrl', apiCalling(database))
+app.put('/imageUrl', apiCalling)
 
 app.listen(3000, () => console.log('Server is now running ...'));
