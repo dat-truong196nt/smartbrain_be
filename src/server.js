@@ -14,13 +14,12 @@ import imageHandler, {apiCalling} from "./Controller/image.js";
 // PUT '/image'			-> push user image
 
 const database = knex({
-	client: 'mysql',
+	client: 'pg',
 	connection: {
-		host : '127.0.0.1',
-		port : 3306,
-		user : 'dat.truong',
-		password : 'admin',
-		database : 'smart_brain'
+		connectionString: process.env.DATABASE_URL,
+		ssl: {
+			rejectUnauthorized: false
+		}
 	}
 })
 
