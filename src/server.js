@@ -35,4 +35,4 @@ app.get('/profile/:id', profileHandler(database))
 app.put('/image', imageHandler(database))
 app.put('/imageUrl', apiCalling)
 
-app.listen(process.env.PORT, () => console.log(`Server is now running at ${process.env.PORT}...`));
+app.listen(process.env.PORT, () => console.log(`Server is now running at ${process.env.PORT} with ${process.env.DATABASE_URL}...`));
