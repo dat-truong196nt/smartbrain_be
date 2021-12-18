@@ -29,6 +29,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+app.get('/', (req, res) => res.json('BE is now running ...'));
 app.post('/signin', signinHandler(database, hashing));
 app.post('/register', registerHandler(database, hashing));
 app.get('/profile/:id', profileHandler(database))
