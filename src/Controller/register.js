@@ -6,18 +6,18 @@ const registerHandler = (database, hashing) => async (req, res) => {
 
 	try {
 		await database.transaction(async trx => {
-			const loginId = await trx('login', 'id')
+			await trx('login')
 				.insert({
 					email: email,
 					hash: hashing.hashSync(password),
-				});
+				}, '*');
 			const userId = await trx('users', 'id')
 				.insert({
 					name: name,
 					email: email,
 					joined: new Date(),
-				});
-			res.json({loginId, userId});
+				}, '*');
+			res.json(userId[0]);
 		})
 	} catch (err) {
 		res.status(400).json('Unable to register');
