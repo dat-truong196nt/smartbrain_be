@@ -2,7 +2,7 @@
 const signinHandler = (database, hashing) => async (req, res) => {
 	let {email, password} = req.body;
 	if (!password || !email)
-	return res.status(400).json('Wrong input format');
+		return res.status(400).json('Wrong input format');
 
 	try {
 		const hash = await database('login').select('hash').where({email})
